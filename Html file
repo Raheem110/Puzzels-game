@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Block Puzzle Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45aaf2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: rainbow 5s linear infinite;
+        }
+
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        .game-board {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1/1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .tile {
+            background: linear-gradient(135deg, #45aaf2, #4ecdc4);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            user-select: none;
+        }
+
+        .tile:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .tile.empty {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+            cursor: default;
+        }
+
+        .tile.empty:hover {
+            transform: none;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .win-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            border-radius: 15px;
+        }
+
+        .win-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .win-message h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45aaf2);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            animation: fall 5s linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .tile {
+                font-size: 1.8rem;
+            }
+            .stat-box {
+                padding: 8px 15px;
+                min-width: 80px;
+            }
+            .stat-value {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Colorful Block Puzzle</h1>
+        <div class="stats">
+            <div class="stat-box">
+                <div>Moves</div>
+                <div class="stat-value" id="moves">0</div>
+            </div>
+            <div class="stat-box">
+                <div>Time</div>
+                <div class="stat-value" id="time">0:00</div>
+            </div>
+        </div>
+        <div class="game-board" id="board">
+            <!-- Tiles will be generated here -->
+            <div class="win-message" id="winMessage">
+                <h2>You Win!</h2>
+                <button id="playAgainBtn">Play Again</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="shuffleBtn">Shuffle</button>
+            <button id="newGameBtn">New Game</button>
+        </div>
+    </div>
+
+    <audio id="moveSound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3" preload="auto"></audio>
+    <audio id="winSound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3" preload="auto"></audio>
+    <audio id="shuffleSound" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" preload="auto"></audio>
+
+    <script>
+        // Game variables
+        let board = [];
+        let emptyPos = { row: 3, col: 3 };
+        let moves = 0;
+        let seconds = 0;
+        let timer;
+        let isGameRunning = false;
+        let winState = false;
+
+        // DOM elements
+        const boardElement = document.getElementById('board');
+        const movesElement = document.getElementById('moves');
+        const timeElement = document.getElementById('time');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const winMessage = document.getElementById('winMessage');
+
+        // Sound elements
+        const moveSound = document.getElementById('moveSound');
+        const winSound = document.getElementById('winSound');
+        const shuffleSound = document.getElementById('shuffleSound');
+
+        // Initialize the game
+        function initGame() {
+            createBoard();
+            renderBoard();
+            addEventListeners();
+        }
+
+        // Create the game board
+        function createBoard() {
+            board = [];
+            let counter = 1;
+            for (let row = 0; row < 4; row++) {
+                board[row] = [];
+                for (let col = 0; col < 4; col++) {
+                    if (row === 3 && col === 3) {
+                        board[row][col] = 0; // Empty tile
+                    } else {
+                        board[row][col] = counter++;
+                    }
+                }
+            }
+        }
+
+        // Render the game board
+        function renderBoard() {
+            boardElement.innerHTML = '';
+            
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const value = board[row][col];
+                    const tile = document.createElement('div');
+                    tile.className = value === 0 ? 'tile empty' : 'tile';
+                    
+                    if (value !== 0) {
+                        tile.textContent = value;
+                        tile.style.background = getTileColor(value);
+                    }
+                    
+                    tile.dataset.row = row;
+                    tile.dataset.col = col;
+                    boardElement.appendChild(tile);
+                }
+            }
+            
+            // Add win message element back (it gets removed when clearing innerHTML)
+            boardElement.appendChild(winMessage);
+        }
+
+        // Get color for tile based on its value
+        function getTileColor(value) {
+            const hue = (value * 15) % 360;
+            return `linear-gradient(135deg, hsl(${hue}, 80%, 60%), hsl(${hue + 20}, 80%, 50%))`;
+        }
+
+        // Add event listeners
+        function addEventListeners() {
+            boardElement.addEventListener('click', handleTileClick);
+            shuffleBtn.addEventListener('click', shuffleBoard);
+            newGameBtn.addEventListener('click', startNewGame);
+            playAgainBtn.addEventListener('click', startNewGame);
+        }
+
+        // Handle tile click
+        function handleTileClick(e) {
+            if (winState) return;
+            
+            const tile = e.target;
+            if (!tile.classList.contains('tile') || tile.classList.contains('empty')) return;
+
+            const row = parseInt(tile.dataset.row);
+            const col = parseInt(tile.dataset.col);
+
+            // Check if the clicked tile is adjacent to the empty space
+            if (isAdjacent(row, col, emptyPos.row, emptyPos.col)) {
+                // Move the tile
+                board[emptyPos.row][emptyPos.col] = board[row][col];
+                board[row][col] = 0;
+                emptyPos = { row, col };
+                
+                // Update moves
+                moves++;
+                movesElement.textContent = moves;
+                
+                // Play move sound
+                moveSound.currentTime = 0;
+                moveSound.play();
+                
+                // Render the updated board
+                renderBoard();
+                
+                // Check for win
+                if (checkWin()) {
+                    winGame();
+                }
+            }
+        }
+
+        // Check if two positions are adjacent
+        function isAdjacent(row1, col1, row2, col2) {
+            return (
+                (Math.abs(row1 - row2) === 1 && col1 === col2) ||
+                (Math.abs(col1 - col2) === 1 && row1 === row2)
+            );
+        }
+
+        // Shuffle the board
+        function shuffleBoard() {
+            if (isGameRunning) {
+                // Don't shuffle if game is already in progress
+                return;
+            }
+            
+            // Reset game state
+            moves = 0;
+            movesElement.textContent = moves;
+            seconds = 0;
+            updateTimerDisplay();
+            winState = false;
+            
+            // Play shuffle sound
+            shuffleSound.currentTime = 0;
+            shuffleSound.play();
+            
+            // Start timer
+            startTimer();
+            
+            // Perform random moves to shuffle
+            const shuffleMoves = 200;
+            let movesDone = 0;
+            
+            const shuffleInterval = setInterval(() => {
+                if (movesDone >= shuffleMoves) {
+                    clearInterval(shuffleInterval);
+                    isGameRunning = true;
+                    return;
+                }
+                
+                const directions = [];
+                if (emptyPos.row > 0) directions.push('up');
+                if (emptyPos.row < 3) directions.push('down');
+                if (emptyPos.col > 0) directions.push('left');
+                if (emptyPos.col < 3) directions.push('right');
+                
+                const randomDir = directions[Math.floor(Math.random() * directions.length)];
+                let newRow = emptyPos.row;
+                let newCol = emptyPos.col;
+                
+                switch (randomDir) {
+                    case 'up':
+                        newRow = emptyPos.row - 1;
+                        break;
+                    case 'down':
+                        newRow = emptyPos.row + 1;
+                        break;
+                    case 'left':
+                        newCol = emptyPos.col - 1;
+                        break;
+                    case 'right':
+                        newCol = emptyPos.col + 1;
+                        break;
+                }
+                
+                // Perform the move
+                board[emptyPos.row][emptyPos.col] = board[newRow][newCol];
+                board[newRow][newCol] = 0;
+                emptyPos = { row: newRow, col: newCol };
+                movesDone++;
+                
+                // Render every 10 moves for performance
+                if (movesDone % 10 === 0) {
+                    renderBoard();
+                }
+            }, 10);
+            
+            // Final render
+            setTimeout(() => {
+                renderBoard();
+            }, shuffleMoves * 10 + 50);
+        }
+
+        // Start a new game
+        function startNewGame() {
+            // Reset game state
+            moves = 0;
+            movesElement.textContent = moves;
+            seconds = 0;
+            updateTimerDisplay();
+            winState = false;
+            isGameRunning = false;
+            
+            // Hide win message
+            winMessage.classList.remove('show');
+            
+            // Create and render the solved board
+            createBoard();
+            renderBoard();
+            
+            // Shuffle the board after a short delay
+            setTimeout(shuffleBoard, 300);
+        }
+
+        // Start the game timer
+        function startTimer() {
+            clearInterval(timer);
+            seconds = 0;
+            updateTimerDisplay();
+            timer = setInterval(() => {
+                seconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        // Update the timer display
+        function updateTimerDisplay() {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            timeElement.textContent = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        }
+
+        // Check if the player has won
+        function checkWin() {
+            let counter = 1;
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    if (row === 3 && col === 3) {
+                        if (board[row][col] !== 0) return false;
+                    } else {
+                        if (board[row][col] !== counter++) return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Handle winning the game
+        function winGame() {
+            winState = true;
+            clearInterval(timer);
+            
+            // Play win sound
+            winSound.currentTime = 0;
+            winSound.play();
+            
+            // Show win message
+            winMessage.classList.add('show');
+            
+            // Create confetti effect
+            createConfetti();
+        }
+
+        // Create confetti effect
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45aaf2', '#a55eea', '#f7b731'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                boardElement.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
